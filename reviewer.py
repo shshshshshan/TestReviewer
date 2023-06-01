@@ -1,5 +1,6 @@
 import requests
 
+# url = 'https://test-reviewer.onrender.com/submit'
 url = 'http://localhost:3000/submit'
 
 ptrs = r'''
@@ -24,7 +25,7 @@ add: mov ax,10
 sets = 1
 items = 10
 
-for i in range(2):
+for i in range(1):
     response = requests.post(url, data={
         'ptrs' : ptrs, 
         'sets' : sets,

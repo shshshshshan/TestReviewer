@@ -36,6 +36,7 @@ app.post('/submit', async (request, response) => {
         response.statusCode = 500;
         response.setHeader('Content-Type', 'text/plain');
         response.end('Internal Server Error');
+        return;
     }
 
     console.log('Request success');
@@ -61,7 +62,7 @@ async function performPrompt(message, ai)
 async function generateReviewer(pointers, sets, items)
 {
     const configuration = new Configuration({
-        apiKey : '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'
+        apiKey : process.env.OPENAI_API_KEY
     })
     const ai = new OpenAIApi(configuration);
 
