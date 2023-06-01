@@ -1,22 +1,9 @@
 const express = require('express');
 const { Configuration, OpenAIApi } = require('openai');
-const session = require('express-session');
-const { v4: uuidv4 } = require('uuid'); 
 
 const app = express();
-const SESSION_EXPIRATION_THRESHOLD = 3_600_000;
 
 app.use(express.urlencoded({ extended: true }));
-app.use(
-    session({
-        secret: 'PaVxNCSvC&7ANnkmF2!',
-        resave: false,
-        saveUninitialized: true,
-        cookie: { secure : false},
-    })
-)
-
-const userSessions = {};
 
 app.post('/submit', async (request, response) => {
     const payload = request.body;
@@ -36,17 +23,7 @@ app.post('/submit', async (request, response) => {
 
     try 
     {
-        const userID = request.session.userID;
-        let sessionData = getSessionData(userID);
-
-        if (!sessionData || isSessionExpired(sessionData)) 
-        {
-            createNewSession(request);
-            sessionData = getSessionData(request.session.userID);
-            console.log('New session')
-        }
-
-        const reviewer = await generateReviewer(ptrs, sets, items, sessionData.ai_assigned);
+        const reviewer = await generateReviewer(ptrs, sets, items);
 
         response.statusCode = 200;
         response.setHeader('Content-Type', 'text/plain');
@@ -60,10 +37,12 @@ app.post('/submit', async (request, response) => {
         response.setHeader('Content-Type', 'text/plain');
         response.end('Internal Server Error');
     }
+
+    console.log('Request success');
 });
 
 app.listen(process.env.PORT || 3000, () => {
-    console.log('Server running on port 3000');
+    console.log('Server running and live');
 });
 
 async function performPrompt(message, ai) 
@@ -79,8 +58,13 @@ async function performPrompt(message, ai)
     return completion.data.choices[0].message;
 }
 
-async function generateReviewer(pointers, sets, items, ai)
+async function generateReviewer(pointers, sets, items)
 {
+    const configuration = new Configuration({
+        apiKey : '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'
+    })
+    const ai = new OpenAIApi(configuration);
+
     const template = `
     Take on the persona of a professional instructor.
 
@@ -97,33 +81,4 @@ async function generateReviewer(pointers, sets, items, ai)
     `
 
     return performPrompt(template, ai)
-}
-
-function createNewSession(request) 
-{
-    const configuration = new Configuration({
-        apiKey : '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'
-    })
-    const ai_assigned = new OpenAIApi(configuration);
-    
-    const userID = uuidv4();
-    request.session.userID = userID;
-
-    const sessionData = {
-        ai_assigned, 
-        startTime: Date.now()
-    };
-
-    userSessions[userID] = sessionData;
-}
-
-function getSessionData(userID) 
-{
-    return userSessions[userID];
-}
-
-function isSessionExpired(userID) 
-{
-    const sessionData = getSessionData(userID);
-    return Date.now() - sessionData.startTime >= SESSION_EXPIRATION_THRESHOLD;
 }
