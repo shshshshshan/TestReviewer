@@ -5,6 +5,12 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 
+const CONFIGURATION = new Configuration({
+    apiKey : process.env.OPENAI_API_KEY
+})
+
+const AI = new OpenAIApi(CONFIGURATION);
+
 app.post('/submit', async (request, response) => {
     const payload = request.body;
     const keys = Object.keys(payload)
@@ -46,9 +52,9 @@ app.listen(process.env.PORT || 3000, () => {
     console.log('Server running and live');
 });
 
-async function performPrompt(message, ai) 
+async function performPrompt(message) 
 {
-    const completion = await ai.createChatCompletion({
+    const completion = await AI.createChatCompletion({
         model: 'gpt-3.5-turbo',
         messages : [{
             role : 'user',
@@ -61,10 +67,6 @@ async function performPrompt(message, ai)
 
 async function generateReviewer(pointers, sets, items)
 {
-    const configuration = new Configuration({
-        apiKey : process.env.OPENAI_API_KEY
-    })
-    const ai = new OpenAIApi(configuration);
 
     const template = `
     Take on the persona of a professional instructor.
@@ -81,5 +83,5 @@ async function generateReviewer(pointers, sets, items)
     Make sure to only include in the questionnaire the most relevant points.
     `
 
-    return performPrompt(template, ai)
+    return performPrompt(template)
 }
